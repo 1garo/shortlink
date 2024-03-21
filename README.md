@@ -2,6 +2,9 @@
 
 This repository hosts a simple shortlink service that provides functionality to generate short URLs for long URLs and to redirect short URLs to their corresponding URLs.
 
+## Architecture
+![image](https://github.com/1garo/shortlink/assets/44412643/592190b0-9714-40e5-840d-646a70d2aada)
+
 ## Features
 
 - Generate short URLs for long URLs
