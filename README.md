@@ -18,7 +18,7 @@ This repository hosts a simple shortlink service that provides functionality to 
 1. Clone the repository:
 
 ```bash
-$ git clone https://github.com/yourusername/shortlink.git
+$ git clone https://github.com/1garo/shortlink.git
 $ cd shortlink
 ```
 
@@ -60,3 +60,19 @@ To redirect a short URL to its corresponding long URL, simply visit the short UR
 `curl -i http://localhost:8080/w2fSYEJ`
 
 The server will respond with an HTTP 302 Found status code and redirect you to the long URL associated with the short URL.
+
+## Thoughts
+
+The app has graceful shutdown implemented, this is important when deploying our app using `k8s`. Whenever `k8s` decided to shutdown pods, it sends a `SIGTERM` signal to the application and it's important that the application is able to handle it and wait for all requests/responses to be finished and not just abruptly quits the program.
+
+In addition to that, our app would need a `/health` route and the following configuration added to pods:
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 80
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 80
+```
