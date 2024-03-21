@@ -134,7 +134,7 @@ func main() {
 
 	// Create a server instance with the router
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":3000",
 		Handler: r,
 	}
 
