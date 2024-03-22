@@ -25,7 +25,7 @@ func NewConfig(filename ...string) Config {
 	}
 
 	if err := godotenv.Load(filename...); err != nil {
-		log.Println("No .env file found")
+		log.Fatalf("No .env file found: %s\n", err)
 	}
 	uri := os.Getenv("MONGODB_URI")
 	if uri == "" {
