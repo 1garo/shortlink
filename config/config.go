@@ -15,8 +15,16 @@ type Config struct {
 	Addr string
 }
 
-func NewConfig() Config {
-	if err := godotenv.Load(); err != nil {
+func NewConfig(filename ...string) Config {
+	if len(filename) == 0 {
+		filename = append(filename, ".env")
+	}
+
+	if len(filename) > 1 {
+		log.Fatal("passing more than 1 filename")
+	}
+
+	if err := godotenv.Load(filename...); err != nil {
 		log.Println("No .env file found")
 	}
 	uri := os.Getenv("MONGODB_URI")
