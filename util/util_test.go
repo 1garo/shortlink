@@ -27,7 +27,9 @@ func TestIsValidUrl(t *testing.T) {
 }
 
 func TestGenerateRandomShortURL(t *testing.T) {
-	cfg := config.NewConfig("../.env.test")
+	cfg, err := config.NewConfig("../.env.test")
+
+	assert.Nil(t, err)
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.DbUri))
 	if err != nil {
@@ -45,7 +47,8 @@ func TestGenerateRandomShortURL(t *testing.T) {
 }
 
 func TestCheckShortLinkExists(t *testing.T) {
-	cfg := config.NewConfig("../.env.test")
+	cfg, err := config.NewConfig("../.env.test")
+	assert.Nil(t, err)
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.DbUri))
 	if err != nil {
