@@ -18,7 +18,11 @@ import (
 )
 
 func main() {
-	cfg := config.NewConfig()
+	cfg, err := config.NewConfig()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.DbUri))
 	if err != nil {
