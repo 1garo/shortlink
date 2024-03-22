@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 	"math/rand"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/1garo/shortlink/config"
@@ -34,11 +36,9 @@ func checkShortLinkExists(collection *mongo.Collection, shortUrl string) bool {
 	return true
 }
 
-func GenerateRandomShortURL(client *mongo.Client) string {
+func GenerateRandomShortURL(client *mongo.Client, config config.Config) string {
 	result := make([]byte, numCharsShortLink)
-	// TODO: move this to a config function
-
-	coll := client.Database(config.Cfg.DbName).Collection(config.Cfg.DbCollection)
+	coll := client.Database(config.DbName).Collection(config.DbCollection)
 	for {
 		for i := 0; i < numCharsShortLink; i++ {
 			randomIndex := random.Intn(len(alphabet))
@@ -50,4 +50,25 @@ func GenerateRandomShortURL(client *mongo.Client) string {
 			return shortLink
 		}
 	}
+}
+
+func IsValidUrl(url string) bool {
+	return strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")
+}
+
+func GracefulShutdown(srv *http.Server) {
+	log.Println("Shutdown Server ...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(context.Background()); err != nil {
+		log.Fatalf("Server shutdown failed: %s\n", err)
+	}
+	// catching ctx.Done(). timeout of 5 seconds.
+	select {
+	case <-ctx.Done():
+		log.Println("timeout of 5 seconds.")
+	}
+	log.Println("Server stopped.")
 }
