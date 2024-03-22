@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/1garo/shortlink/config"
-	util "github.com/1garo/shortlink/utils"
+	"github.com/1garo/shortlink/util"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,17 +16,19 @@ import (
 
 type Handler struct {
 	client *mongo.Client
+	config config.Config
 }
 
-func NewHandler(client *mongo.Client) *Handler {
+func NewHandler(client *mongo.Client, config config.Config) *Handler {
 	return &Handler{
 		client,
+		config,
 	}
 }
 
-func SetupRouter(client *mongo.Client) *gin.Engine {
+func SetupRouter(client *mongo.Client, config config.Config) *gin.Engine {
 	r := gin.Default()
-	h := NewHandler(client)
+	h := NewHandler(client, config)
 	r.GET("/:url", h.RedirectHandler)
 	r.POST("/shorten", h.ShortenUrl)
 
@@ -34,27 +36,24 @@ func SetupRouter(client *mongo.Client) *gin.Engine {
 }
 
 func (h *Handler) RedirectHandler(c *gin.Context) {
+	log.Println("[RedirectHandler]")
 	url := c.Param("url")
-	coll := h.client.Database(config.Cfg.DbName).Collection(config.Cfg.DbCollection)
-
-	log.Println(url)
+	coll := h.client.Database(h.config.DbName).Collection(h.config.DbCollection)
 
 	var result TinyUrlSchema
 	filter := bson.D{{"shortUrl", url}}
 	update := bson.D{{"$inc", bson.D{{"count", 1}}}}
 	err := coll.FindOneAndUpdate(context.Background(), filter, update).Decode(&result)
 
-	if err == mongo.ErrNoDocuments {
+	if errors.Is(err, mongo.ErrNoDocuments) {
 		errMsg := fmt.Sprintf("No document was found with the following url: %s", url)
 		log.Println(errMsg)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": errMsg,
 		})
 		return
-	}
-	if err != nil {
-		errMsg := fmt.Sprintf("InternalServerError: %s", url)
-		log.Println(errMsg)
+	} else if err != nil {
+		log.Printf("InternalServerError: %s\n", url)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "InternalServerError",
 		})
@@ -65,8 +64,9 @@ func (h *Handler) RedirectHandler(c *gin.Context) {
 }
 
 func (h *Handler) ShortenUrl(c *gin.Context) {
+	log.Println("[ShortenUrl]")
 	c.Header("Content-Type", "application/json")
-	coll := h.client.Database(config.Cfg.DbName).Collection(config.Cfg.DbCollection)
+	coll := h.client.Database(h.config.DbName).Collection(h.config.DbCollection)
 
 	var input ShortenUrlRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -77,16 +77,15 @@ func (h *Handler) ShortenUrl(c *gin.Context) {
 		return
 	}
 
-	if !strings.HasPrefix(input.Url, "http://") && !strings.HasPrefix(input.Url, "https://") {
-		log.Println("bad prefix")
+	if !util.IsValidUrl(input.Url) {
+		log.Println("bad url: should have http or https")
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "bad prefix: should have http or https",
+			"error": "bad url: should have http or https",
 		})
 		return
-
 	}
 
-	url := util.GenerateRandomShortURL(h.client)
+	url := util.GenerateRandomShortURL(h.client, h.config)
 
 	doc := bson.D{{"shortUrl", url}, {"count", 0}, {"originalUrl", input.Url}}
 	_, err := coll.InsertOne(context.Background(), doc)
@@ -98,7 +97,6 @@ func (h *Handler) ShortenUrl(c *gin.Context) {
 		return
 
 	}
-
 	output := ShortenUrlResponse{
 		ShortUrl: url,
 	}

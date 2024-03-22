@@ -8,14 +8,14 @@ import (
 )
 
 
-var Cfg Config
 type Config struct {
 	DbName       string
 	DbCollection string
 	DbUri        string
+	Addr string
 }
 
-func NewConfig() {
+func NewConfig() Config {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
 	}
@@ -32,9 +32,15 @@ func NewConfig() {
 	if collectionName == "" {
 		log.Fatal("COLLECTION not set.")
 	}
-	Cfg = Config{
+
+	addr := os.Getenv("PORT")
+	if addr == "" {
+		log.Fatal("PORT not set.")
+	}
+	return Config{
 		DbName:       dbName,
 		DbCollection: collectionName,
 		DbUri:        uri,
+		Addr: addr,
 	}
 }

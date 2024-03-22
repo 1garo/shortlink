@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"log"
 	"os"
@@ -17,28 +17,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-
-func graceful (srv *http.Server) {
-	log.Println("Shutdown Server ...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := srv.Shutdown(context.Background()); err != nil {
-		log.Fatalf("Server shutdown failed: %s\n", err)
-	}
-	// catching ctx.Done(). timeout of 5 seconds.
-	select {
-	case <-ctx.Done():
-		log.Println("timeout of 5 seconds.")
-	}
-	log.Println("Server stopped.")
-}
-
 func main() {
-	config.NewConfig()
+	cfg := config.NewConfig()
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(config.Cfg.DbUri))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.DbUri))
 	if err != nil {
 		panic(err)
 	}
@@ -49,8 +31,8 @@ func main() {
 	}()
 
 	srv := &http.Server{
-		Addr:    ":3000",
-		Handler: api.SetupRouter(client),
+		Addr:    fmt.Sprintf(":%s", cfg.Addr),
+		Handler: api.SetupRouter(client, cfg),
 	}
 
 	go func() {
@@ -68,5 +50,5 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	// block until signal is received
 	<-quit
-	graceful(srv)
+	//GracefulShutdown(srv)
 }
