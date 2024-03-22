@@ -3,7 +3,7 @@
 This repository hosts a simple shortlink service that provides functionality to generate short URLs for long URLs and to redirect short URLs to their corresponding URLs.
 
 ## Architecture
-![image](https://github.com/1garo/shortlink/assets/44412643/592190b0-9714-40e5-840d-646a70d2aada)
+![image](https://github.com/1garo/shortlink/assets/44412643/51658204-2b36-4700-b3a9-c3c405e08a2e)
 
 ## Features
 
@@ -14,7 +14,10 @@ This repository hosts a simple shortlink service that provides functionality to 
 
 ### Prerequisites
 
-- Go installed on your machine
+- [Go](https://go.dev/doc/install)
+- [Make](https://www.gnu.org/software/make/#download)
+- [Nginx](https://www.nginx.com/resources/wiki/start/topics/tutorials/install/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### Installation
 
@@ -25,16 +28,18 @@ $ git clone https://github.com/1garo/shortlink.git
 $ cd shortlink
 ```
 
-2. Install dependencies:
+2. Up all needed containers:
 
-`$ go mod tidy`
-
-3. Build the project:
-
-`$ go run main.go`
+```bash
+$ make up
+```
 
 
-By default, the server will start on port `8080`.
+By default on dev, the server will start on port `3000`, you can use `make run`.
+
+On  docker compose, nginx runs on port `9999` and forward traffic to both server running.
+
+Tests can be run with `make test` or `make testv` for verbose output. 
 
 ## Usage
 
@@ -45,7 +50,7 @@ To generate a short URL for a long URL, send a `POST` request to the `/shorten` 
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"long_url": "https://example.com/very/long/url"}' \
+  -d '{"url": "https://example.com/very/long/url"}' \
   http://localhost:8080/shorten
 ```
 
