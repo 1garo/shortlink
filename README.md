@@ -34,12 +34,20 @@ $ cd shortlink
 $ make up
 ```
 
+- Remove all containers:
+
+  ```bash
+  $ make down
+  ```
+
 
 By default on dev, the server will start on port `3000`, you can use `make run`.
 
 On  docker compose, nginx runs on port `9999` and forward traffic to both server running.
 
-Tests can be run with `make test` or `make testv` for verbose output. 
+Tests can be run with `make test` or `make testv` for verbose output.
+
+Checkout [Makefile](./Makefile) to see all possible commands.
 
 ## Usage
 
