@@ -47,13 +47,13 @@ func (h *Handler) RedirectHandler(c *gin.Context) {
 
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		errMsg := fmt.Sprintf("No document was found with the following url: %s", url)
-		log.Println(errMsg)
+		log.Println("[RedirectHandler]: ", errMsg)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": errMsg,
 		})
 		return
 	} else if err != nil {
-		log.Printf("InternalServerError: %s\n", url)
+		log.Printf("[RedirectHandler]: InternalServerError: %s\n", url)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "InternalServerError",
 		})
@@ -70,15 +70,15 @@ func (h *Handler) ShortenUrl(c *gin.Context) {
 
 	var input ShortenUrlRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		log.Println("could not decode body.")
+		log.Println("[ShortenUrl]: could not decode body.")
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"error": "could not decode body",
 		})
 		return
 	}
 
 	if !util.IsValidUrl(input.Url) {
-		log.Println("bad url: should have http or https")
+		log.Println("[ShortenUrl]: bad url: should have http or https")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "bad url: should have http or https",
 		})
@@ -90,12 +90,11 @@ func (h *Handler) ShortenUrl(c *gin.Context) {
 	doc := bson.D{{"shortUrl", url}, {"count", 0}, {"originalUrl", input.Url}}
 	_, err := coll.InsertOne(context.Background(), doc)
 	if err != nil {
-		log.Println("could not insert new document: %w", err)
+		log.Println("[ShortenUrl]: could not insert new document: %w", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "InternalServerError",
 		})
 		return
-
 	}
 	output := ShortenUrlResponse{
 		ShortUrl: url,

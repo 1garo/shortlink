@@ -67,8 +67,8 @@ func GracefulShutdown(srv *http.Server) {
 	}
 	// catching ctx.Done(). timeout of 5 seconds.
 	select {
-	case <-ctx.Done():
-		log.Println("timeout of 5 seconds.")
+		case <-ctx.Done():
+			log.Println("timeout of 5 seconds.")
 	}
 	log.Println("Server stopped.")
 }
