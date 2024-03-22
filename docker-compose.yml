@@ -16,6 +16,7 @@ services:
   api02:
     <<: *api
     hostname: api02
+    # TODO: add GIN_MODE=release
     env_file:
       - path: ./.env
         required: true # default
