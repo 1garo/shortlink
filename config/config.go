@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -15,40 +15,42 @@ type Config struct {
 	Addr string
 }
 
-func NewConfig(filename ...string) Config {
+func NewConfig(filename ...string) (Config, error) {
 	if len(filename) == 0 {
 		filename = append(filename, ".env")
 	}
 
 	if len(filename) > 1 {
-		log.Fatal("passing more than 1 filename")
+		return Config{}, fmt.Errorf("passing more than 1 filename.")
 	}
 
 	if err := godotenv.Load(filename...); err != nil {
-		log.Fatalf("No .env file found: %s\n", err)
+		return Config{}, fmt.Errorf("No .env file found")
 	}
+
 	uri := os.Getenv("MONGODB_URI")
 	if uri == "" {
-		log.Fatal("MONGODB_URI not set.")
+		return Config{}, fmt.Errorf("MONGODB_URI not set.")
 	}
 
 	dbName := os.Getenv("DATABASE")
 	if dbName == "" {
-		log.Fatal("DATABASE not set.")
+		return Config{}, fmt.Errorf("DATABASE not set.")
 	}
 	collectionName := os.Getenv("COLLECTION")
 	if collectionName == "" {
-		log.Fatal("COLLECTION not set.")
+		return Config{}, fmt.Errorf("COLLECTION not set.")
 	}
 
 	addr := os.Getenv("PORT")
 	if addr == "" {
-		log.Fatal("PORT not set.")
+		return Config{}, fmt.Errorf("PORT not set.")
 	}
+
 	return Config{
 		DbName:       dbName,
 		DbCollection: collectionName,
 		DbUri:        uri,
 		Addr: addr,
-	}
+	}, nil
 }
