@@ -24,7 +24,7 @@ This repository hosts a simple shortlink service that provides functionality to 
 1. Clone the repository:
 
 ```bash
-$ git clone https://github.com/1garo/shortlink.git
+$ git clone git@github.com:1garo/shortlink.git
 $ cd shortlink
 ```
 
