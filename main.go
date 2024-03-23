@@ -12,6 +12,7 @@ import (
 	"github.com/1garo/shortlink/config"
 	"github.com/1garo/shortlink/controller"
 	"github.com/1garo/shortlink/service/db"
+	"github.com/1garo/shortlink/util"
 )
 
 func main() {
@@ -43,5 +44,5 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	// block until signal is received
 	<-quit
-	//GracefulShutdown(srv)
+	util.GracefulShutdown(srv)
 }
