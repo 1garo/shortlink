@@ -59,36 +59,41 @@ To generate a short URL for a long URL, send a `POST` request to the `/shorten` 
 curl -X POST \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com/very/long/url"}' \
-  http://localhost:8080/shorten
+  http://localhost:3000/shorten
 ```
 
 The server will respond with a JSON object containing the generated short URL:
 
 ```json
 {
-  "short_url": "http://localhost:8080/w2fSYEJ"
+  "short_url": "http://localhost:3000/w2fSYEJ"
 }
 ```
 
 ### Redirecting Short URLs
 To redirect a short URL to its corresponding long URL, simply visit the short URL in your browser or send a GET request to it. For example:
 
-`curl -i http://localhost:8080/w2fSYEJ`
+`curl -i http://localhost:3000/w2fSYEJ`
 
 The server will respond with an HTTP 302 Found status code and redirect you to the long URL associated with the short URL.
 
-## Thoughts
+## Database
+The choice was to go with `mongodb` because it fits better our requirements of horizontal auto-scaling, with the possibility of using `shards` (way easier than SQL setup). 
 
-The app has graceful shutdown implemented, this is important when deploying our app using `k8s`. Whenever `k8s` decided to shutdown pods, it sends a `SIGTERM` signal to the application and it's important that the application is able to handle it and wait for all requests/responses to be finished and not just abruptly quits the program.
+`shortUrl` field is using a `text-index` because it's our `key` in all operations.
 
-In addition to that, our app would need a `/health` route and the following configuration added to pods:
-```yaml
-livenessProbe:
-  httpGet:
-    path: /health
-    port: 80
-readinessProbe:
-  httpGet:
-    path: /health
-    port: 80
-```
+## Improvements
+1. The app has graceful shutdown implemented, a must feature when using `kubernetes`. Whenever `kubernetes` decided to shutdown pods, it sends a `SIGTERM` signal to the application and it's important that the application is able to handle it and wait for all requests/responses to be finished and not just abruptly quits the program.
+
+    In addition to that, our app would need a `/health` route and the following configuration added to pods:
+    ```yaml
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 80
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 80
+    ```
+2. Auth: Could be useful to have a more fancy implementation like OAuth 2.0 or a more simpler like JWT.
