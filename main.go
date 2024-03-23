@@ -9,10 +9,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/1garo/shortlink/cmd/api"
 	"github.com/1garo/shortlink/config"
-	"github.com/1garo/shortlink/db"
-
+	"github.com/1garo/shortlink/controller"
+	"github.com/1garo/shortlink/service/db"
 )
 
 func main() {
@@ -27,7 +26,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Addr),
-		Handler: api.SetupRouter(client, cfg),
+		Handler: controller.SetupRouter(client, cfg),
 	}
 
 	go func() {
@@ -41,7 +40,7 @@ func main() {
 	quit := make(chan os.Signal)
 	// kill (no param) default send syscanll.SIGTERM
 	// kill -2 is syscall.SIGINT
-	// kill -9 is syscall. SIGKILL but can"t be catch, so don't need add it
+	// kill -9 is syscall. SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	// block until signal is received
 	<-quit
