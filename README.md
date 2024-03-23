@@ -85,7 +85,7 @@ I choose `nginx` because I feel that is the most simple and effective (and the o
 Load balancer configuration is always tricky, I created this [one](nginx.conf) with rate limit in mind but trying to not be so strict and remove the service capability of processing requests.
 
 ## Database
-The choice was to go with `mongodb` because it fits better our requirements of horizontal auto-scaling, for example, with the possibility of using `shards`(way easier to setup than SQL). 
+The choice was to go with `mongodb` because it fits better our requirements of horizontal auto-scaling, for example, with the possibility of using `shards` (way easier to setup than SQL). 
 
 `shortUrl` field is using a `text-index` because it's our `key` in all operations.
 
@@ -105,4 +105,5 @@ The choice was to go with `mongodb` because it fits better our requirements of h
     ```
 2. Auth: Could be a fancy implementation like OAuth 2.0 or a simpler one like JWT.
 3. I always like to let infrastructure do most of the hardwork related to scaling, performance and optimizations. But after that we can go to the code and start doing some improvements, like introducing goroutines.
-4. A cache layer you be great(e.g Redis), would improve our performance and our services would be free to process new incoming requests.
+4. A cache layer you be great (e.g Redis), would improve our performance and our services would be free to process new incoming requests.
+5. Adding some logging feature, as well as monitoring/metrics/alerts, like `GCP Cloud Logging` and `Prometheus` respectfully.
