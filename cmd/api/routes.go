@@ -36,6 +36,7 @@ func SetupRouter(client *mongo.Client, config config.Config) *gin.Engine {
 }
 
 func (h *Handler) RedirectHandler(c *gin.Context) {
+	// TODO: use a service here
 	log.Println("[RedirectHandler]")
 	url := c.Param("url")
 	coll := h.client.Database(h.config.DbName).Collection(h.config.DbCollection)
@@ -48,7 +49,7 @@ func (h *Handler) RedirectHandler(c *gin.Context) {
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		errMsg := fmt.Sprintf("No document was found with the following url: %s", url)
 		log.Println("[RedirectHandler]: ", errMsg)
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusNotFound, gin.H{
 			"error": errMsg,
 		})
 		return
@@ -64,6 +65,7 @@ func (h *Handler) RedirectHandler(c *gin.Context) {
 }
 
 func (h *Handler) ShortenUrl(c *gin.Context) {
+	// TODO: use a service here
 	log.Println("[ShortenUrl]")
 	c.Header("Content-Type", "application/json")
 	coll := h.client.Database(h.config.DbName).Collection(h.config.DbCollection)

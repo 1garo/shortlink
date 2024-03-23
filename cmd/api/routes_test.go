@@ -73,7 +73,7 @@ func TestRedirectHandler(t *testing.T) {
 		count       int
 	}{
 		{"/testShortUrl", "https://www.google.com", http.StatusFound, 1},
-		{"/badurl", "", http.StatusBadRequest, 0},
+		{"/not_found", "", http.StatusNotFound, 0},
 	}
 
 	for _, tt := range testCases {
@@ -86,7 +86,7 @@ func TestRedirectHandler(t *testing.T) {
 		assert.Equal(t, tt.expectedUrl, w.Result().Header.Get("Location"))
 		filter := bson.D{{"$text", bson.D{{"$search", strings.TrimLeft(tt.uri, "/")}}}}
 		var result TinyUrlSchema
-		err = db.FindOne(context.Background(), collection, filter).Decode(&result)
+		_ = collection.FindOne(context.Background(), filter).Decode(&result)
 
 		assert.Equal(t, tt.count, result.Count)
 	}
