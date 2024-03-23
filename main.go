@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os/signal"
@@ -12,9 +11,8 @@ import (
 
 	"github.com/1garo/shortlink/cmd/api"
 	"github.com/1garo/shortlink/config"
+	"github.com/1garo/shortlink/db"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
@@ -24,15 +22,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.DbUri))
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
+	client := db.DbConnect(cfg.DbUri)
+	defer db.DbDisconnect(client)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Addr),

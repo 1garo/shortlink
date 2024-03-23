@@ -1,14 +1,13 @@
 package util
 
 import (
-	"context"
 	"testing"
 
 	"github.com/1garo/shortlink/config"
+	"github.com/1garo/shortlink/db"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
 func TestIsValidUrl(t *testing.T) {
 	testCases := []struct {
 		url  string
@@ -31,15 +30,8 @@ func TestGenerateRandomShortURL(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.DbUri))
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
+	client := db.DbConnect(cfg.DbUri)
+	defer db.DbDisconnect(client)
 
 	url := GenerateRandomShortURL(client, cfg)
 
@@ -50,16 +42,13 @@ func TestCheckShortLinkExists(t *testing.T) {
 	cfg, err := config.NewConfig("../.env.test")
 	assert.Nil(t, err)
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.DbUri))
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
+	client := db.DbConnect(cfg.DbUri)
+	defer db.DbDisconnect(client)
+
 	collection := client.Database(cfg.DbName).Collection(cfg.DbCollection)
+
+	err = SetupUrlTest(collection)
+	assert.Nil(t, err)
 
 	testCases := []struct {
 		url  string

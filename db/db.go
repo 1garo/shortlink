@@ -1,0 +1,28 @@
+package db
+
+import (
+	"context"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+func FindOne(ctx context.Context, collection *mongo.Collection, filter bson.D) *mongo.SingleResult {
+	return collection.FindOne(ctx, filter)
+}
+
+func DbConnect(uri string) *mongo.Client {
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	if err != nil {
+		panic(err)
+	}
+
+	return client
+}
+
+func DbDisconnect(client *mongo.Client) {
+	if err := client.Disconnect(context.TODO()); err != nil {
+		panic(err)
+	}
+}

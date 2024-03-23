@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/1garo/shortlink/config"
+	"github.com/1garo/shortlink/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const (
@@ -24,7 +26,7 @@ var random = rand.New(rand.NewSource(time.Now().UnixNano()))
 func checkShortLinkExists(collection *mongo.Collection, shortUrl string) bool {
 	filter := bson.D{{"shortUrl", shortUrl}}
 	var _result bson.M
-	err := collection.FindOne(context.Background(), filter).Decode(&_result)
+	err := db.FindOne(context.Background(), collection, filter).Decode(&_result)
 
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		log.Printf("No document was found with the following shortUrl: %s\n", shortUrl)
@@ -67,8 +69,22 @@ func GracefulShutdown(srv *http.Server) {
 	}
 	// catching ctx.Done(). timeout of 5 seconds.
 	select {
-		case <-ctx.Done():
-			log.Println("timeout of 5 seconds.")
+	case <-ctx.Done():
+		log.Println("timeout of 5 seconds.")
 	}
 	log.Println("Server stopped.")
+}
+
+func SetupUrlTest(collection *mongo.Collection) error {
+	filter := bson.D{{"shortUrl", "testShortUrl"}}
+	update := bson.D{
+		{"$set", bson.D{
+			{"shortUrl", "testShortUrl"},
+			{"count", 0},
+			{"originalUrl", "https://www.google.com"},
+		}},
+	}
+	opts := options.Update().SetUpsert(true)
+	_, err := collection.UpdateOne(context.Background(), filter, update, opts)
+	return err
 }

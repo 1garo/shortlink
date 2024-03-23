@@ -5,12 +5,14 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/1garo/shortlink/config"
+	"github.com/1garo/shortlink/db"
+	"github.com/1garo/shortlink/util"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestShortenUrl(t *testing.T) {
@@ -18,15 +20,8 @@ func TestShortenUrl(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.DbUri))
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
+	client := db.DbConnect(cfg.DbUri)
+	defer db.DbDisconnect(client)
 
 	testCases := []struct {
 		body string
@@ -58,26 +53,24 @@ func TestRedirectHandler(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.DbUri))
-	if err != nil {
-		panic(err)
-	}
-	// TODO: used in some places, make a function
-	defer func() {
-		if err := client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
+	client := db.DbConnect(cfg.DbUri)
+	defer db.DbDisconnect(client)
 
 	testCases := []struct {
-		uri string
+		uri         string
 		expectedUrl string
-		code int
+		code        int
+		count       int
 	}{
-		{"/testShortUrl", "https://www.google.com", http.StatusFound},
-		{"/badurl", "", http.StatusBadRequest},
+		{"/testShortUrl", "https://www.google.com", http.StatusFound, 1},
+		{"/badurl", "", http.StatusBadRequest, 0},
 	}
 	router := SetupRouter(client, cfg)
+
+	collection := client.Database(cfg.DbName).Collection(cfg.DbCollection)
+
+	err = util.SetupUrlTest(collection)
+	assert.Nil(t, err)
 
 	for _, tt := range testCases {
 		w := httptest.NewRecorder()
@@ -87,6 +80,10 @@ func TestRedirectHandler(t *testing.T) {
 
 		assert.Equal(t, tt.code, w.Code)
 		assert.Equal(t, tt.expectedUrl, w.Result().Header.Get("Location"))
-
+		filter := bson.D{{"shortUrl", strings.TrimLeft(tt.uri, "/")}}
+		var result TinyUrlSchema
+		err = db.FindOne(context.Background(),collection, filter).Decode(&result)
+		
+		assert.Equal(t, tt.count, result.Count)
 	}
 }
