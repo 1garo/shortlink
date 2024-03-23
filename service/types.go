@@ -8,5 +8,5 @@ type ServiceError struct {
 }
 
 func (s *ServiceError) Error() string {
-	return fmt.Sprintf("status %d: err %v", s.Code, s.Err)
+	return fmt.Sprintf("%v", s.Err)
 }

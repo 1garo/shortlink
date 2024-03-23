@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -41,17 +39,11 @@ func (h *Handler) RedirectHandler(c *gin.Context) {
 	svc := shortlink.NewShortLinkService(h.client, h.config)
 	result, err := svc.Redirect(url)
 
-	if errors.Is(err, mongo.ErrNoDocuments) {
-		errMsg := fmt.Sprintf("No document was found with the following url: %s", url)
-		log.Println("[RedirectHandler]: ", errMsg)
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": errMsg,
-		})
-		return
-	} else if err != nil {
-		log.Printf("[RedirectHandler]: InternalServerError: %s\n", url)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "InternalServerError",
+	if err != nil {
+		err := err.(*service.ServiceError)
+		log.Printf("[ShortenUrl]: %s\n", err.Err.Error())
+		c.JSON(err.Code, gin.H{
+			"error": err.Err.Error(),
 		})
 		return
 	}
@@ -65,7 +57,7 @@ func (h *Handler) ShortenUrlHandler(c *gin.Context) {
 
 	var input shortlink.ShortenUrlRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		log.Println("[ShortenUrlHandler]: could not decode body.")
+		log.Println("[ShortenUrl]: could not decode body.")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "could not decode body",
 		})
@@ -73,12 +65,12 @@ func (h *Handler) ShortenUrlHandler(c *gin.Context) {
 	}
 
 	svc := shortlink.NewShortLinkService(h.client, h.config)
-	url, err := svc.ShortenUrlHandler(input.Url)
+	url, err := svc.ShortenUrl(input.Url)
 	if err != nil {
 		err := err.(*service.ServiceError)
-		log.Println("[ShortenUrlHandler]: %w", err)
+		log.Printf("[ShortenUrl]: %s\n", err.Err.Error())
 		c.JSON(err.Code, gin.H{
-			"error": err.Err,
+			"error": err.Err.Error(),
 		})
 		return
 	}
