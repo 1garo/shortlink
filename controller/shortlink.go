@@ -13,17 +13,17 @@ import (
 
 type Handler struct {
 	client *mongo.Client
-	config config.Config
+	config *config.Config
 }
 
-func NewHandler(client *mongo.Client, config config.Config) *Handler {
+func NewHandler(client *mongo.Client, config *config.Config) *Handler {
 	return &Handler{
 		client,
 		config,
 	}
 }
 
-func SetupRouter(client *mongo.Client, config config.Config) *gin.Engine {
+func SetupHandler(client *mongo.Client, config *config.Config) *gin.Engine {
 	r := gin.Default()
 	h := NewHandler(client, config)
 	r.GET("/:url", h.RedirectHandler)

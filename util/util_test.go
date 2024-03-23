@@ -27,13 +27,13 @@ func TestIsValidUrl(t *testing.T) {
 
 func TestGenerateRandomShortURL(t *testing.T) {
 	cfg, err := config.NewConfig("../.env.test")
-
 	assert.Nil(t, err)
 
-	client := db.DbConnect(cfg.DbUri)
+	client := db.DbConnect(cfg.DbUrl)
 	defer db.DbDisconnect(client)
+	coll := client.Database(cfg.DbName).Collection(cfg.DbCollection)
 
-	url := GenerateRandomShortURL(client, cfg)
+	url := GenerateRandomShortURL(client, coll)
 
 	assert.Equal(t, len(url), 7)
 }
@@ -42,7 +42,7 @@ func TestCheckShortLinkExists(t *testing.T) {
 	cfg, err := config.NewConfig("../.env.test")
 	assert.Nil(t, err)
 
-	client := db.DbConnect(cfg.DbUri)
+	client := db.DbConnect(cfg.DbUrl)
 	defer t.Cleanup(func() {
 		err := db.DbCleanup(client, cfg)
 		assert.Nil(t, err)

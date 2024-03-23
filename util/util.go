@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/1garo/shortlink/config"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -37,9 +36,8 @@ func checkShortLinkExists(collection *mongo.Collection, shortUrl string) bool {
 	return true
 }
 
-func GenerateRandomShortURL(client *mongo.Client, config config.Config) string {
+func GenerateRandomShortURL(client *mongo.Client, coll *mongo.Collection) string {
 	result := make([]byte, numCharsShortLink)
-	coll := client.Database(config.DbName).Collection(config.DbCollection)
 	for {
 		for i := 0; i < numCharsShortLink; i++ {
 			randomIndex := random.Intn(len(alphabet))

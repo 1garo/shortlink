@@ -16,11 +16,11 @@ import (
 
 type ShortLinkService struct {
 	conn       *mongo.Client
-	cfg        config.Config
+	cfg        *config.Config
 	collection *mongo.Collection
 }
 
-func NewShortLinkService(client *mongo.Client, config config.Config) *ShortLinkService {
+func NewShortLinkService(client *mongo.Client, config *config.Config) *ShortLinkService {
 	coll := client.Database(config.DbName).Collection(config.DbCollection)
 	return &ShortLinkService{
 		client,
@@ -64,7 +64,7 @@ func (s *ShortLinkService) ShortenUrl(inputUrl string) (url string, err error) {
 		return
 	}
 
-	url = util.GenerateRandomShortURL(s.conn, s.cfg)
+	url = util.GenerateRandomShortURL(s.conn, s.collection)
 
 	doc := bson.D{{"shortUrl", url}, {"count", 0}, {"originalUrl", inputUrl}}
 	_, err = s.collection.InsertOne(context.Background(), doc)

@@ -20,13 +20,13 @@ func TestShortenUrl(t *testing.T) {
 	cfg, err := config.NewConfig("../.env.test")
 	assert.Nil(t, err)
 
-	client := db.DbConnect(cfg.DbUri)
+	client := db.DbConnect(cfg.DbUrl)
 	defer t.Cleanup(func() {
 		err := db.DbCleanup(client, cfg)
 		assert.Nil(t, err)
 	})
 
-	router := SetupRouter(client, cfg)
+	router := SetupHandler(client, cfg)
 
 	testCases := []struct {
 		body string
@@ -56,7 +56,7 @@ func TestRedirectHandler(t *testing.T) {
 	cfg, err := config.NewConfig("../.env.test")
 	assert.Nil(t, err)
 
-	client := db.DbConnect(cfg.DbUri)
+	client := db.DbConnect(cfg.DbUrl)
 	defer t.Cleanup(func() {
 		err := db.DbCleanup(client, cfg)
 		assert.Nil(t, err)
@@ -65,7 +65,7 @@ func TestRedirectHandler(t *testing.T) {
 	err = util.SetupUrlTest(collection)
 	assert.Nil(t, err)
 
-	router := SetupRouter(client, cfg)
+	router := SetupHandler(client, cfg)
 
 	testCases := []struct {
 		uri         string
@@ -85,6 +85,7 @@ func TestRedirectHandler(t *testing.T) {
 
 		assert.Equal(t, tt.code, w.Code)
 		assert.Equal(t, tt.expectedUrl, w.Result().Header.Get("Location"))
+
 		filter := bson.D{{"$text", bson.D{{"$search", strings.TrimLeft(tt.uri, "/")}}}}
 		var result shortlink.TinyUrlSchema
 		_ = collection.FindOne(context.Background(), filter).Decode(&result)

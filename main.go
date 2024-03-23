@@ -16,17 +16,16 @@ import (
 
 func main() {
 	cfg, err := config.NewConfig()
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	client := db.DbConnect(cfg.DbUri)
+	client := db.DbConnect(cfg.DbUrl)
 	defer db.DbDisconnect(client)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Addr),
-		Handler: controller.SetupRouter(client, cfg),
+		Handler: controller.SetupHandler(client, cfg),
 	}
 
 	go func() {

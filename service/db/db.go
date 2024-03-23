@@ -9,8 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func DbConnect(uri string) *mongo.Client {
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+func DbConnect(url string) *mongo.Client {
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(url))
 	if err != nil {
 		panic(err)
 	}
@@ -19,12 +19,12 @@ func DbConnect(uri string) *mongo.Client {
 }
 
 func DbDisconnect(client *mongo.Client) {
-	if err := client.Disconnect(context.TODO()); err != nil {
+	if err := client.Disconnect(context.Background()); err != nil {
 		panic(err)
 	}
 }
 
-func DbCleanup(client *mongo.Client, cfg config.Config) error {
+func DbCleanup(client *mongo.Client, cfg *config.Config) error {
 	defer DbDisconnect(client)
 	collection := client.Database(cfg.DbName).Collection(cfg.DbCollection)
 	filter := bson.D{{}}
