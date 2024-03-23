@@ -1,16 +1,15 @@
-package api
+package controller
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/1garo/shortlink/config"
-	"github.com/1garo/shortlink/util"
+	"github.com/1garo/shortlink/service"
+	"github.com/1garo/shortlink/service/shortlink"
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -30,21 +29,17 @@ func SetupRouter(client *mongo.Client, config config.Config) *gin.Engine {
 	r := gin.Default()
 	h := NewHandler(client, config)
 	r.GET("/:url", h.RedirectHandler)
-	r.POST("/shorten", h.ShortenUrl)
+	r.POST("/shorten", h.ShortenUrlHandler)
 
 	return r
 }
 
 func (h *Handler) RedirectHandler(c *gin.Context) {
-	// TODO: use a service here
 	log.Println("[RedirectHandler]")
 	url := c.Param("url")
-	coll := h.client.Database(h.config.DbName).Collection(h.config.DbCollection)
 
-	var result TinyUrlSchema
-	filter := bson.D{{"$text", bson.D{{"$search", url}}}}
-	update := bson.D{{"$inc", bson.D{{"count", 1}}}}
-	err := coll.FindOneAndUpdate(context.Background(), filter, update).Decode(&result)
+	svc := shortlink.NewShortLinkService(h.client, h.config)
+	result, err := svc.Redirect(url)
 
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		errMsg := fmt.Sprintf("No document was found with the following url: %s", url)
@@ -64,41 +59,31 @@ func (h *Handler) RedirectHandler(c *gin.Context) {
 	c.Redirect(http.StatusFound, result.OriginalUrl)
 }
 
-func (h *Handler) ShortenUrl(c *gin.Context) {
-	// TODO: use a service here
-	log.Println("[ShortenUrl]")
+func (h *Handler) ShortenUrlHandler(c *gin.Context) {
+	log.Println("[ShortenUrlHandler]")
 	c.Header("Content-Type", "application/json")
-	coll := h.client.Database(h.config.DbName).Collection(h.config.DbCollection)
 
-	var input ShortenUrlRequest
+	var input shortlink.ShortenUrlRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		log.Println("[ShortenUrl]: could not decode body.")
+		log.Println("[ShortenUrlHandler]: could not decode body.")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "could not decode body",
 		})
 		return
 	}
 
-	if !util.IsValidUrl(input.Url) {
-		log.Println("[ShortenUrl]: bad url: should have http or https")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "bad url: should have http or https",
-		})
-		return
-	}
-
-	url := util.GenerateRandomShortURL(h.client, h.config)
-
-	doc := bson.D{{"shortUrl", url}, {"count", 0}, {"originalUrl", input.Url}}
-	_, err := coll.InsertOne(context.Background(), doc)
+	svc := shortlink.NewShortLinkService(h.client, h.config)
+	url, err := svc.ShortenUrlHandler(input.Url)
 	if err != nil {
-		log.Println("[ShortenUrl]: could not insert new document: %w", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "InternalServerError",
+		err := err.(*service.ServiceError)
+		log.Println("[ShortenUrlHandler]: %w", err)
+		c.JSON(err.Code, gin.H{
+			"error": err.Err,
 		})
 		return
 	}
-	output := ShortenUrlResponse{
+
+	output := shortlink.ShortenUrlResponse{
 		ShortUrl: url,
 	}
 	c.JSON(http.StatusOK, output)

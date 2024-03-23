@@ -1,4 +1,4 @@
-package api
+package controller
 
 import (
 	"bytes"
@@ -9,14 +9,15 @@ import (
 	"testing"
 
 	"github.com/1garo/shortlink/config"
-	"github.com/1garo/shortlink/db"
+	"github.com/1garo/shortlink/service/db"
+	"github.com/1garo/shortlink/service/shortlink"
 	"github.com/1garo/shortlink/util"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestShortenUrl(t *testing.T) {
-	cfg, err := config.NewConfig("../../.env.test")
+	cfg, err := config.NewConfig("../.env.test")
 	assert.Nil(t, err)
 
 	client := db.DbConnect(cfg.DbUri)
@@ -52,7 +53,7 @@ func TestShortenUrl(t *testing.T) {
 }
 
 func TestRedirectHandler(t *testing.T) {
-	cfg, err := config.NewConfig("../../.env.test")
+	cfg, err := config.NewConfig("../.env.test")
 	assert.Nil(t, err)
 
 	client := db.DbConnect(cfg.DbUri)
@@ -85,7 +86,7 @@ func TestRedirectHandler(t *testing.T) {
 		assert.Equal(t, tt.code, w.Code)
 		assert.Equal(t, tt.expectedUrl, w.Result().Header.Get("Location"))
 		filter := bson.D{{"$text", bson.D{{"$search", strings.TrimLeft(tt.uri, "/")}}}}
-		var result TinyUrlSchema
+		var result shortlink.TinyUrlSchema
 		_ = collection.FindOne(context.Background(), filter).Decode(&result)
 
 		assert.Equal(t, tt.count, result.Count)

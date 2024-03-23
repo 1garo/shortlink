@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/1garo/shortlink/config"
-	"github.com/1garo/shortlink/db"
+	"github.com/1garo/shortlink/service/db"
 	"github.com/stretchr/testify/assert"
 )
 
