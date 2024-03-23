@@ -17,11 +17,15 @@ import (
 
 func TestShortenUrl(t *testing.T) {
 	cfg, err := config.NewConfig("../../.env.test")
-
 	assert.Nil(t, err)
 
 	client := db.DbConnect(cfg.DbUri)
-	defer db.DbDisconnect(client)
+	defer t.Cleanup(func() {
+		err := db.DbCleanup(client, cfg)
+		assert.Nil(t, err)
+	})
+
+	router := SetupRouter(client, cfg)
 
 	testCases := []struct {
 		body string
@@ -35,7 +39,6 @@ func TestShortenUrl(t *testing.T) {
 		}`, http.StatusBadRequest},
 		{`{}`, http.StatusBadRequest},
 	}
-	router := SetupRouter(client, cfg)
 
 	for _, tt := range testCases {
 		w := httptest.NewRecorder()
@@ -50,11 +53,18 @@ func TestShortenUrl(t *testing.T) {
 
 func TestRedirectHandler(t *testing.T) {
 	cfg, err := config.NewConfig("../../.env.test")
-
 	assert.Nil(t, err)
 
 	client := db.DbConnect(cfg.DbUri)
-	defer db.DbDisconnect(client)
+	defer t.Cleanup(func() {
+		err := db.DbCleanup(client, cfg)
+		assert.Nil(t, err)
+	})
+	collection := client.Database(cfg.DbName).Collection(cfg.DbCollection)
+	err = util.SetupUrlTest(collection)
+	assert.Nil(t, err)
+
+	router := SetupRouter(client, cfg)
 
 	testCases := []struct {
 		uri         string
@@ -65,12 +75,6 @@ func TestRedirectHandler(t *testing.T) {
 		{"/testShortUrl", "https://www.google.com", http.StatusFound, 1},
 		{"/badurl", "", http.StatusBadRequest, 0},
 	}
-	router := SetupRouter(client, cfg)
-
-	collection := client.Database(cfg.DbName).Collection(cfg.DbCollection)
-
-	err = util.SetupUrlTest(collection)
-	assert.Nil(t, err)
 
 	for _, tt := range testCases {
 		w := httptest.NewRecorder()
@@ -82,8 +86,8 @@ func TestRedirectHandler(t *testing.T) {
 		assert.Equal(t, tt.expectedUrl, w.Result().Header.Get("Location"))
 		filter := bson.D{{"shortUrl", strings.TrimLeft(tt.uri, "/")}}
 		var result TinyUrlSchema
-		err = db.FindOne(context.Background(),collection, filter).Decode(&result)
-		
+		err = db.FindOne(context.Background(), collection, filter).Decode(&result)
+
 		assert.Equal(t, tt.count, result.Count)
 	}
 }

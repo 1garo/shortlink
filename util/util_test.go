@@ -43,10 +43,12 @@ func TestCheckShortLinkExists(t *testing.T) {
 	assert.Nil(t, err)
 
 	client := db.DbConnect(cfg.DbUri)
-	defer db.DbDisconnect(client)
+	defer t.Cleanup(func() {
+		err := db.DbCleanup(client, cfg)
+		assert.Nil(t, err)
+	})
 
 	collection := client.Database(cfg.DbName).Collection(cfg.DbCollection)
-
 	err = SetupUrlTest(collection)
 	assert.Nil(t, err)
 
