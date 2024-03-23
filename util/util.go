@@ -24,7 +24,7 @@ const (
 var random = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func checkShortLinkExists(collection *mongo.Collection, shortUrl string) bool {
-	filter := bson.D{{"shortUrl", shortUrl}}
+	filter := bson.D{{"$text", bson.D{{"$search", shortUrl}}}}
 	var _result bson.M
 	err := db.FindOne(context.Background(), collection, filter).Decode(&_result)
 

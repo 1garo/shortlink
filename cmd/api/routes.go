@@ -41,7 +41,7 @@ func (h *Handler) RedirectHandler(c *gin.Context) {
 	coll := h.client.Database(h.config.DbName).Collection(h.config.DbCollection)
 
 	var result TinyUrlSchema
-	filter := bson.D{{"shortUrl", url}}
+	filter := bson.D{{"$text", bson.D{{"$search", url}}}}
 	update := bson.D{{"$inc", bson.D{{"count", 1}}}}
 	err := coll.FindOneAndUpdate(context.Background(), filter, update).Decode(&result)
 

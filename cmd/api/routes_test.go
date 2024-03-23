@@ -84,7 +84,7 @@ func TestRedirectHandler(t *testing.T) {
 
 		assert.Equal(t, tt.code, w.Code)
 		assert.Equal(t, tt.expectedUrl, w.Result().Header.Get("Location"))
-		filter := bson.D{{"shortUrl", strings.TrimLeft(tt.uri, "/")}}
+		filter := bson.D{{"$text", bson.D{{"$search", strings.TrimLeft(tt.uri, "/")}}}}
 		var result TinyUrlSchema
 		err = db.FindOne(context.Background(), collection, filter).Decode(&result)
 
