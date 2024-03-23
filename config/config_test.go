@@ -10,11 +10,11 @@ import (
 func TestNewConfig(t *testing.T) {
 	testCases := []struct {
 		filename []string
-		e error
+		e        error
 	}{
-		{[]string{".env", ".env.test"}, errors.New("passing more than 1 filename.")},
-		{[]string{".env.not.found"}, errors.New("No .env file found")},
-		{[]string{".env.empty"}, errors.New("MONGODB_URI not set.")},
+		{[]string{".env", ".env.test"}, errors.New("cannot pass more than 1 filename")},
+		{[]string{".env.not.found"}, errors.New("no .env file found")},
+		{[]string{".env.empty"}, errors.New("MONGODB_URI not set")},
 		{[]string{"../.env"}, nil},
 	}
 
